@@ -419,6 +419,35 @@
       return key.slice(5).replace('-','/');
     }
 
+    // API 可能會針對同一天回傳兩筆分開的紀錄（Leon 與 Ric 各自於不同時間儲存），
+    // 這裡依日期合併成單一筆，避免圖表把同一天拆成兩個 X 軸座標點。
+    function emptyPerson() {
+      return { weight:'', bmi:null, exercise:false };
+    }
+
+    function mergePersonInto(target, source) {
+      if (!source) return;
+      if (source.weight !== undefined && source.weight !== null && source.weight !== '') {
+        target.weight = source.weight;
+        target.bmi = source.bmi ?? target.bmi;
+      }
+      if (source.exercise) target.exercise = true;
+    }
+
+    function mergeRecordsByDate(records) {
+      const map = new Map();
+      records.forEach(r => {
+        const key = toDateKey(r.date);
+        if (!map.has(key)) {
+          map.set(key, { date: r.date, leon: emptyPerson(), ric: emptyPerson() });
+        }
+        const merged = map.get(key);
+        mergePersonInto(merged.leon, r.leon);
+        mergePersonInto(merged.ric, r.ric);
+      });
+      return Array.from(map.values());
+    }
+
     function calculateBMI(weight, heightCm) {
       const w = Number(weight);
       if (!w || w <= 0) return null;
@@ -521,7 +550,7 @@
       if (showLoading) setLoading(true);
       try {
         const data = await apiGet({action:'records', days:'30'});
-        allRecords = data.records || [];
+        allRecords = mergeRecordsByDate(data.records || []);
         renderTable();
         renderCharts();
         renderMonthlySummary();
