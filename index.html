@@ -155,7 +155,7 @@
       .toolbar-row{align-items:end}
       .people-grid{flex-direction:row}
       .person-card{flex:1}
-      .summary-grid{grid-template-columns:repeat(4,1fr)}
+      .summary-grid{grid-template-columns:repeat(5,1fr)}
       .chart-grid{flex-direction:row}
       .chart-grid .card{flex:1}
     }
@@ -317,15 +317,19 @@
       </article>
       <article class="card summary-card">
         <div id="leonMonthChange" class="summary-value">—</div>
-        <div class="summary-label">🐰 Leon 月變化</div>
+        <div class="summary-label">Leon 月變化</div>
       </article>
       <article class="card summary-card">
         <div id="ricMonthChange" class="summary-value">—</div>
-        <div class="summary-label">🐶 Ric 月變化</div>
+        <div class="summary-label">Ric 月變化</div>
       </article>
       <article class="card summary-card">
-        <div id="exerciseDays" class="summary-value">—</div>
-        <div class="summary-label">本月運動總次數</div>
+        <div id="leonExerciseDays" class="summary-value">—</div>
+        <div class="summary-label">Leon 本月運動次數</div>
+      </article>
+      <article class="card summary-card">
+        <div id="ricExerciseDays" class="summary-value">—</div>
+        <div class="summary-label">Ric 本月運動次數</div>
       </article>
     </section>
 
@@ -640,9 +644,10 @@
       document.getElementById('leonMonthChange').textContent = monthChange(rows,'leon');
       document.getElementById('ricMonthChange').textContent = monthChange(rows,'ric');
 
-      const exerciseCount = rows.reduce((sum,r)=>
-        sum + (r.leon.exercise ? 1 : 0) + (r.ric.exercise ? 1 : 0), 0);
-      document.getElementById('exerciseDays').textContent = `${exerciseCount} 次`;
+      const leonExerciseCount = rows.reduce((sum,r)=>sum + (r.leon.exercise ? 1 : 0), 0);
+      const ricExerciseCount = rows.reduce((sum,r)=>sum + (r.ric.exercise ? 1 : 0), 0);
+      document.getElementById('leonExerciseDays').textContent = `${leonExerciseCount} 次`;
+      document.getElementById('ricExerciseDays').textContent = `${ricExerciseCount} 次`;
     }
 
     function monthChange(rows, person) {
