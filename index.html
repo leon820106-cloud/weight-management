@@ -100,14 +100,13 @@
     .person-title h2{margin:0;color:var(--ink);font-family:"Noto Serif TC",serif;font-size:19px;font-weight:600}
     .height{font-size:12.5px;color:var(--ink-soft)}
 
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .check{
       display:flex;align-items:center;gap:9px;background:var(--paper-deep);
       border-radius:12px;padding:12px;margin-top:14px;font-size:14px;color:var(--ink-soft)
     }
     .check input{width:18px;height:18px;accent-color:var(--moss)}
 
-    .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+    .metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
     .metric{background:var(--paper-deep);border-radius:14px;padding:12px 6px;text-align:center}
     .metric-value{font-size:20px;font-weight:700;color:var(--ink);font-family:"Noto Serif TC",serif}
     .metric-label{font-size:11px;color:var(--ink-soft);margin-top:3px;letter-spacing:.3px}
@@ -242,15 +241,9 @@
             </div>
           </div>
         </div>
-        <div class="form-grid">
-          <div>
-            <label for="leonWeight">體重（kg）</label>
-            <input id="leonWeight" type="number" min="1" max="300" step="0.1" placeholder="例如 77.1" oninput="updatePerson('leon')">
-          </div>
-          <div>
-            <label for="leonTarget">目標體重（kg）</label>
-            <input id="leonTarget" type="number" min="1" max="300" step="0.1" value="70" oninput="updatePerson('leon')">
-          </div>
+        <div class="field">
+          <label for="leonWeight">體重（kg）</label>
+          <input id="leonWeight" type="number" min="1" max="300" step="0.1" placeholder="例如 77.1" oninput="updatePerson('leon')">
         </div>
         <label class="check">
           <input id="leonExercise" type="checkbox">
@@ -264,10 +257,6 @@
           <div class="metric">
             <div id="leonStatus" class="metric-value" style="font-size:16px">—</div>
             <div class="metric-label">BMI 分類</div>
-          </div>
-          <div class="metric">
-            <div id="leonRemain" class="metric-value" style="font-size:17px">—</div>
-            <div class="metric-label">距目標</div>
           </div>
         </div>
         <div class="person-action">
@@ -297,15 +286,9 @@
             </div>
           </div>
         </div>
-        <div class="form-grid">
-          <div>
-            <label for="ricWeight">體重（kg）</label>
-            <input id="ricWeight" type="number" min="1" max="300" step="0.1" placeholder="例如 85.6" oninput="updatePerson('ric')">
-          </div>
-          <div>
-            <label for="ricTarget">目標體重（kg）</label>
-            <input id="ricTarget" type="number" min="1" max="300" step="0.1" value="78" oninput="updatePerson('ric')">
-          </div>
+        <div class="field">
+          <label for="ricWeight">體重（kg）</label>
+          <input id="ricWeight" type="number" min="1" max="300" step="0.1" placeholder="例如 85.6" oninput="updatePerson('ric')">
         </div>
         <label class="check">
           <input id="ricExercise" type="checkbox">
@@ -319,10 +302,6 @@
           <div class="metric">
             <div id="ricStatus" class="metric-value" style="font-size:16px">—</div>
             <div class="metric-label">BMI 分類</div>
-          </div>
-          <div class="metric">
-            <div id="ricRemain" class="metric-value" style="font-size:17px">—</div>
-            <div class="metric-label">距目標</div>
           </div>
         </div>
         <div class="person-action">
@@ -388,7 +367,7 @@
   </main>
 
   <script>
-    const API_URL = '請貼上你的_APPS_SCRIPT_WEB_APP_URL';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzqXAknWkW4hIwiB9x5vQpBJhamvgis0kvTmaQ41xRnnoiyJ1RE4pQ09znghIAFF-HKCA/exec';
 
     const HEIGHTS = { leon: 166.3, ric: 180 };
     let allRecords = [];
@@ -400,7 +379,6 @@
       document.getElementById('recordDate').value = toDateInput(today);
       document.getElementById('monthSelect').value = toMonthInput(today);
       document.getElementById('monthSelect').addEventListener('change', renderMonthlySummary);
-      loadTargets();
       updatePerson('leon');
       updatePerson('ric');
       refreshAll();
@@ -434,7 +412,6 @@
 
     function updatePerson(person) {
       const weight = Number(document.getElementById(person+'Weight').value);
-      const target = Number(document.getElementById(person+'Target').value);
       const bmi = calculateBMI(weight, HEIGHTS[person]);
       const status = getBMIStatus(bmi);
 
@@ -443,25 +420,6 @@
       statusEl.textContent = status.text;
       statusEl.className = 'metric-value ' + status.css;
       statusEl.style.fontSize = '16px';
-
-      const remainEl = document.getElementById(person+'Remain');
-      if (weight && target) {
-        const diff = Math.round((weight-target)*10)/10;
-        remainEl.textContent = diff > 0 ? `${diff} kg` : diff === 0 ? '已達標' : `低於目標 ${Math.abs(diff)} kg`;
-      } else {
-        remainEl.textContent = '—';
-      }
-      saveTargets();
-    }
-
-    function loadTargets() {
-      document.getElementById('leonTarget').value = localStorage.getItem('leonTarget') || '70';
-      document.getElementById('ricTarget').value = localStorage.getItem('ricTarget') || '78';
-    }
-
-    function saveTargets() {
-      localStorage.setItem('leonTarget', document.getElementById('leonTarget').value);
-      localStorage.setItem('ricTarget', document.getElementById('ricTarget').value);
     }
 
     async function apiGet(params={}) {
