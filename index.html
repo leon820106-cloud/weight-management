@@ -346,13 +346,17 @@
         <table>
           <thead>
             <tr>
-              <th>日期</th>
-              <th>🐰 體重</th>
-              <th>🐰 BMI</th>
-              <th>🐰 運動</th>
-              <th>🐶 體重</th>
-              <th>🐶 BMI</th>
-              <th>🐶 運動</th>
+              <th rowspan="2">日期</th>
+              <th colspan="3">Leon</th>
+              <th colspan="3">Ric</th>
+            </tr>
+            <tr>
+              <th>體重</th>
+              <th>BMI</th>
+              <th>運動</th>
+              <th>體重</th>
+              <th>BMI</th>
+              <th>運動</th>
             </tr>
           </thead>
           <tbody id="recordsBody">
@@ -393,6 +397,26 @@
 
     function toMonthInput(date) {
       return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+    }
+
+    // API 回傳的日期可能是完整的 Date 字串（例如 "Tue Jul 21 2026 00:00:00 GMT+0800 ..."），
+    // 這裡統一轉換成可靠的 YYYY-MM-DD 鍵值，以及顯示用的 YYYY/MM/DD、MM/DD 格式。
+    function toDateKey(dateStr) {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDateDisplay(dateStr) {
+      return toDateKey(dateStr).replaceAll('-','/');
+    }
+
+    function formatDateShort(dateStr) {
+      const key = toDateKey(dateStr);
+      return key.slice(5).replace('-','/');
     }
 
     function calculateBMI(weight, heightCm) {
@@ -503,7 +527,7 @@
         renderMonthlySummary();
 
         const selected = document.getElementById('recordDate').value;
-        const found = allRecords.find(r => r.date === selected);
+        const found = allRecords.find(r => toDateKey(r.date) === selected);
         if (found) fillRecord(found);
       } catch(err) {
         showMessage(err.message, false);
@@ -529,10 +553,10 @@
         return;
       }
 
-      const rows = [...allRecords].sort((a,b)=>b.date.localeCompare(a.date));
+      const rows = [...allRecords].sort((a,b)=>toDateKey(b.date).localeCompare(toDateKey(a.date)));
       body.innerHTML = rows.map(r=>`
         <tr>
-          <td>${r.date.replaceAll('-','/')}</td>
+          <td>${formatDateDisplay(r.date)}</td>
           <td>${formatWeight(r.leon.weight)}</td>
           <td>${r.leon.bmi ?? '—'}</td>
           <td>${r.leon.exercise ? '✓' : '—'}</td>
@@ -544,8 +568,8 @@
     }
 
     function renderCharts() {
-      const rows = [...allRecords].sort((a,b)=>a.date.localeCompare(b.date));
-      const labels = rows.map(r=>r.date.slice(5).replace('-','/'));
+      const rows = [...allRecords].sort((a,b)=>toDateKey(a.date).localeCompare(toDateKey(b.date)));
+      const labels = rows.map(r=>formatDateShort(r.date));
 
       const mossLine = 'rgba(124,138,103,1)';
       const mossFill = 'rgba(124,138,103,.12)';
@@ -558,11 +582,11 @@
         data:{
           labels,
           datasets:[
-            {label:'🐰 Leon 體重',data:rows.map(r=>r.leon.weight || null),spanGaps:true,tension:.3,borderColor:mossLine,backgroundColor:mossFill,fill:true,pointRadius:2},
-            {label:'🐶 Ric 體重',data:rows.map(r=>r.ric.weight || null),spanGaps:true,tension:.3,borderColor:clayLine,backgroundColor:clayFill,fill:true,pointRadius:2}
+            {label:'Leon 體重',data:rows.map(r=>r.leon.weight || null),spanGaps:true,tension:.3,borderColor:mossLine,backgroundColor:mossFill,fill:true,pointRadius:3,pointHoverRadius:5},
+            {label:'Ric 體重',data:rows.map(r=>r.ric.weight || null),spanGaps:true,tension:.3,borderColor:clayLine,backgroundColor:clayFill,fill:true,pointRadius:3,pointHoverRadius:5}
           ]
         },
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#3c3327',font:{family:'Noto Sans TC'}}}},scales:{x:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}},y:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}}}}
+        options:{responsive:true,maintainAspectRatio:false,layout:{padding:{left:4,right:12,top:8,bottom:0}},plugins:{legend:{position:'bottom',labels:{color:'#3c3327',font:{family:'Noto Sans TC'},boxWidth:14,padding:14}}},scales:{x:{offset:true,ticks:{color:'#7a6f5d',autoSkip:true,maxRotation:0},grid:{color:'#e3d9c4'}},y:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}}}}
       });
 
       if (bmiChart) bmiChart.destroy();
@@ -571,18 +595,18 @@
         data:{
           labels,
           datasets:[
-            {label:'🐰 Leon BMI',data:rows.map(r=>r.leon.bmi || null),spanGaps:true,tension:.3,borderColor:mossLine,backgroundColor:mossFill,fill:true,pointRadius:2},
-            {label:'🐶 Ric BMI',data:rows.map(r=>r.ric.bmi || null),spanGaps:true,tension:.3,borderColor:clayLine,backgroundColor:clayFill,fill:true,pointRadius:2}
+            {label:'Leon BMI',data:rows.map(r=>r.leon.bmi || null),spanGaps:true,tension:.3,borderColor:mossLine,backgroundColor:mossFill,fill:true,pointRadius:3,pointHoverRadius:5},
+            {label:'Ric BMI',data:rows.map(r=>r.ric.bmi || null),spanGaps:true,tension:.3,borderColor:clayLine,backgroundColor:clayFill,fill:true,pointRadius:3,pointHoverRadius:5}
           ]
         },
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#3c3327',font:{family:'Noto Sans TC'}}}},scales:{x:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}},y:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}}}}
+        options:{responsive:true,maintainAspectRatio:false,layout:{padding:{left:4,right:12,top:8,bottom:0}},plugins:{legend:{position:'bottom',labels:{color:'#3c3327',font:{family:'Noto Sans TC'},boxWidth:14,padding:14}}},scales:{x:{offset:true,ticks:{color:'#7a6f5d',autoSkip:true,maxRotation:0},grid:{color:'#e3d9c4'}},y:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}}}}
       });
     }
 
     function renderMonthlySummary() {
       const month = document.getElementById('monthSelect').value;
       document.getElementById('monthLabel').textContent = month || '—';
-      const rows = allRecords.filter(r=>r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+      const rows = allRecords.filter(r=>toDateKey(r.date).startsWith(month)).sort((a,b)=>toDateKey(a.date).localeCompare(toDateKey(b.date)));
 
       document.getElementById('leonMonthChange').textContent = monthChange(rows,'leon');
       document.getElementById('ricMonthChange').textContent = monthChange(rows,'ric');
