@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#8a7a5c" />
+  <title>Leon & Ric 體重記錄</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600&display=swap');
+
+    :root{
+      --paper:#f6f1e7;
+      --paper-deep:#efe7d6;
+      --card:#fffdf8;
+      --ink:#3c3327;
+      --ink-soft:#7a6f5d;
+      --line:#e3d9c4;
+      --moss:#7c8a67;
+      --moss-deep:#5f6d4c;
+      --clay:#c1815a;
+      --clay-deep:#a3613d;
+      --sand:#efe3cd;
+      --green:#6e8452;
+      --amber:#b8863f;
+      --rose:#b6604f;
+      --shadow:0 6px 20px rgba(60,51,39,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Noto Sans TC","Noto Serif TC",sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(124,138,103,.06), transparent 45%),
+        radial-gradient(circle at 90% 10%, rgba(193,129,90,.07), transparent 40%),
+        var(--paper);
+      color:var(--ink);
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+    }
+    .container{max-width:720px;margin:auto;padding:20px 16px 64px}
+
+    .hero,.card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      position:relative;
+    }
+    .hero{padding:22px 20px;margin-bottom:16px;overflow:hidden}
+    .hero::before{
+      content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;
+      border-radius:50%;background:radial-gradient(circle,rgba(124,138,103,.14),transparent 70%);
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    h1{margin:0;color:var(--moss-deep);font-family:"Noto Serif TC",serif;font-weight:700;font-size:22px;letter-spacing:.5px}
+    .divider{border:none;border-top:1px dashed var(--line);margin:16px 0}
+
+    .toolbar{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+    .toolbar-row{display:flex;gap:10px}
+    .field{flex:1;min-width:0}
+    label{display:block;margin-bottom:6px;color:var(--ink-soft);font-size:12.5px;letter-spacing:.2px}
+    input{
+      width:100%;padding:11px 12px;border:1px solid var(--line);
+      border-radius:12px;background:#fffefb;font-size:16px;color:var(--ink);
+      font-family:inherit;
+    }
+    input:focus{outline:none;border-color:var(--moss);box-shadow:0 0 0 3px rgba(124,138,103,.14)}
+
+    .btn{
+      border:0;border-radius:12px;padding:12px 16px;font-weight:600;
+      font-size:14.5px;cursor:pointer;font-family:"Noto Sans TC",sans-serif;
+      letter-spacing:.3px;transition:transform .12s ease, opacity .12s ease;
+    }
+    .btn:active{transform:scale(.98)}
+    .btn-primary{background:var(--moss-deep);color:#fdfbf5}
+    .btn-secondary{background:var(--clay-deep);color:#fdfbf5}
+    .btn-light{background:var(--sand);color:var(--moss-deep);border:1px solid var(--line);flex:1}
+    .btn:disabled{opacity:.5;cursor:wait}
+
+    .people-grid{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
+    .card{padding:20px}
+    .person-card.leon{border-top:3px solid var(--moss)}
+    .person-card.ric{border-top:3px solid var(--clay)}
+
+    .person-title{
+      display:flex;justify-content:space-between;align-items:center;
+      border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px
+    }
+    .person-id{display:flex;align-items:center;gap:10px}
+    .avatar{
+      width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;padding:4px;
+    }
+    .avatar svg{width:100%;height:100%;display:block}
+    .leon .avatar{background:linear-gradient(160deg,#eef1e6,#dfe6d2)}
+    .ric .avatar{background:linear-gradient(160deg,#f5e6da,#ecd3bf)}
+    .brand-mark{display:flex;align-items:center;gap:2px}
+    .brand-mark svg{width:30px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.08))}
+    .person-title h2{margin:0;color:var(--ink);font-family:"Noto Serif TC",serif;font-size:19px;font-weight:600}
+    .height{font-size:12.5px;color:var(--ink-soft)}
+
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .check{
+      display:flex;align-items:center;gap:9px;background:var(--paper-deep);
+      border-radius:12px;padding:12px;margin-top:14px;font-size:14px;color:var(--ink-soft)
+    }
+    .check input{width:18px;height:18px;accent-color:var(--moss)}
+
+    .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+    .metric{background:var(--paper-deep);border-radius:14px;padding:12px 6px;text-align:center}
+    .metric-value{font-size:20px;font-weight:700;color:var(--ink);font-family:"Noto Serif TC",serif}
+    .metric-label{font-size:11px;color:var(--ink-soft);margin-top:3px;letter-spacing:.3px}
+    .status-normal{color:var(--green)!important}
+    .status-over{color:var(--amber)!important}
+    .status-obese{color:var(--rose)!important}
+
+    .person-action{display:flex;justify-content:center;margin-top:18px}
+    .person-action .btn{width:100%}
+
+    .message{display:none;padding:12px 15px;border-radius:12px;margin-bottom:16px;text-align:center;font-size:13.5px}
+    .message.ok{display:block;background:#eef2e6;color:var(--green);border:1px solid #d9e3cb}
+    .message.err{display:block;background:#f7e9e5;color:var(--rose);border:1px solid #ecd4cd}
+
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .summary-card{text-align:center;padding:16px 10px}
+    .summary-value{font-size:20px;font-weight:700;color:var(--moss-deep);font-family:"Noto Serif TC",serif}
+    .summary-label{font-size:12px;color:var(--ink-soft);margin-top:6px}
+
+    .chart-grid{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
+    .chart-wrap{height:260px}
+    .section-title{
+      margin:0 0 14px;color:var(--ink);font-family:"Noto Serif TC",serif;font-size:16px;font-weight:600;
+      display:flex;align-items:center;gap:8px;
+    }
+    .section-title::before{content:"";width:4px;height:16px;background:var(--moss);border-radius:2px;display:inline-block}
+
+    .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;min-width:600px}
+    th,td{padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);font-size:13px}
+    th{background:var(--paper-deep);color:var(--ink);font-weight:600;font-size:12px}
+    tbody tr:nth-child(even){background:rgba(239,231,214,.35)}
+    .note{font-size:11.5px;color:var(--ink-soft);margin-top:10px}
+
+    .loading{
+      display:none;position:fixed;inset:0;z-index:20;background:rgba(246,241,231,.85);
+      align-items:center;justify-content:center;color:var(--moss-deep);font-weight:700;
+      font-family:"Noto Serif TC",serif;font-size:15px;backdrop-filter:blur(1px);
+    }
+
+    footer.hint{text-align:center;color:var(--ink-soft);font-size:11.5px;margin-top:8px}
+
+    @media(min-width:640px){
+      .container{padding:32px 24px 64px}
+      h1{font-size:26px}
+      .toolbar-row{align-items:end}
+      .people-grid{flex-direction:row}
+      .person-card{flex:1}
+      .summary-grid{grid-template-columns:repeat(4,1fr)}
+      .chart-grid{flex-direction:row}
+      .chart-grid .card{flex:1}
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">資料處理中…</div>
+
+  <main class="container">
+    <section class="hero">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 -12 100 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="35" cy="18" rx="10" ry="26" fill="#f7c9d8" stroke="#3c3327" stroke-width="4"/>
+            <ellipse cx="65" cy="18" rx="10" ry="26" fill="#f7c9d8" stroke="#3c3327" stroke-width="4"/>
+            <ellipse cx="35" cy="20" rx="5" ry="17" fill="#fbe4ea"/>
+            <ellipse cx="65" cy="20" rx="5" ry="17" fill="#fbe4ea"/>
+            <circle cx="50" cy="58" r="34" fill="#fbe4ea" stroke="#3c3327" stroke-width="4"/>
+            <circle cx="30" cy="66" r="6" fill="#f2a6b8" opacity=".7"/>
+            <circle cx="70" cy="66" r="6" fill="#f2a6b8" opacity=".7"/>
+            <circle cx="40" cy="55" r="3.4" fill="#3c3327"/>
+            <circle cx="60" cy="55" r="3.4" fill="#3c3327"/>
+            <path d="M45 66 Q50 71 55 66" stroke="#3c3327" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </svg>
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="22" cy="45" rx="14" ry="22" fill="#c99a63" stroke="#3c3327" stroke-width="4" transform="rotate(-15 22 45)"/>
+            <ellipse cx="78" cy="45" rx="14" ry="22" fill="#c99a63" stroke="#3c3327" stroke-width="4" transform="rotate(15 78 45)"/>
+            <circle cx="50" cy="55" r="34" fill="#f0d9b5" stroke="#3c3327" stroke-width="4"/>
+            <circle cx="30" cy="63" r="6" fill="#e8a97a" opacity=".6"/>
+            <circle cx="70" cy="63" r="6" fill="#e8a97a" opacity=".6"/>
+            <circle cx="40" cy="52" r="3.4" fill="#3c3327"/>
+            <circle cx="60" cy="52" r="3.4" fill="#3c3327"/>
+            <ellipse cx="50" cy="62" rx="4.2" ry="3.2" fill="#3c3327"/>
+            <path d="M50 65 Q50 70 44 71 M50 65 Q50 70 56 71" stroke="#3c3327" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <div>
+          <h1>Leon & Ric 體重記錄</h1>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <div class="field">
+            <label for="recordDate">紀錄日期</label>
+            <input id="recordDate" type="date">
+          </div>
+          <div class="field">
+            <label for="monthSelect">統計月份</label>
+            <input id="monthSelect" type="month">
+          </div>
+        </div>
+        <div class="toolbar-row">
+          <button class="btn btn-light" onclick="loadSelectedDate()">讀取該日</button>
+          <button class="btn btn-light" onclick="refreshAll()">更新資料</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="message" class="message"></div>
+
+    <section class="people-grid">
+      <article class="card person-card leon">
+        <div class="person-title">
+          <div class="person-id">
+            <span class="avatar">
+              <svg viewBox="0 -12 100 112" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <ellipse cx="35" cy="18" rx="10" ry="26" fill="#f7c9d8" stroke="#3c3327" stroke-width="4"/>
+                <ellipse cx="65" cy="18" rx="10" ry="26" fill="#f7c9d8" stroke="#3c3327" stroke-width="4"/>
+                <ellipse cx="35" cy="20" rx="5" ry="17" fill="#fbe4ea"/>
+                <ellipse cx="65" cy="20" rx="5" ry="17" fill="#fbe4ea"/>
+                <circle cx="50" cy="58" r="34" fill="#fbe4ea" stroke="#3c3327" stroke-width="4"/>
+                <circle cx="30" cy="66" r="6" fill="#f2a6b8" opacity=".7"/>
+                <circle cx="70" cy="66" r="6" fill="#f2a6b8" opacity=".7"/>
+                <circle cx="40" cy="55" r="3.4" fill="#3c3327"/>
+                <circle cx="60" cy="55" r="3.4" fill="#3c3327"/>
+                <path d="M45 66 Q50 71 55 66" stroke="#3c3327" stroke-width="3" fill="none" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div>
+              <h2>Leon</h2>
+              <span class="height">身高 166.3 cm</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label for="leonWeight">體重（kg）</label>
+            <input id="leonWeight" type="number" min="1" max="300" step="0.1" placeholder="例如 77.1" oninput="updatePerson('leon')">
+          </div>
+          <div>
+            <label for="leonTarget">目標體重（kg）</label>
+            <input id="leonTarget" type="number" min="1" max="300" step="0.1" value="70" oninput="updatePerson('leon')">
+          </div>
+        </div>
+        <label class="check">
+          <input id="leonExercise" type="checkbox">
+          今日有運動
+        </label>
+        <div class="metric-grid">
+          <div class="metric">
+            <div id="leonBMI" class="metric-value">—</div>
+            <div class="metric-label">BMI</div>
+          </div>
+          <div class="metric">
+            <div id="leonStatus" class="metric-value" style="font-size:16px">—</div>
+            <div class="metric-label">BMI 分類</div>
+          </div>
+          <div class="metric">
+            <div id="leonRemain" class="metric-value" style="font-size:17px">—</div>
+            <div class="metric-label">距目標</div>
+          </div>
+        </div>
+        <div class="person-action">
+          <button id="leonSaveBtn" class="btn btn-primary" onclick="savePerson('leon')">儲存 Leon 紀錄</button>
+        </div>
+      </article>
+
+      <article class="card person-card ric">
+        <div class="person-title">
+          <div class="person-id">
+            <span class="avatar">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <ellipse cx="22" cy="45" rx="14" ry="22" fill="#c99a63" stroke="#3c3327" stroke-width="4" transform="rotate(-15 22 45)"/>
+                <ellipse cx="78" cy="45" rx="14" ry="22" fill="#c99a63" stroke="#3c3327" stroke-width="4" transform="rotate(15 78 45)"/>
+                <circle cx="50" cy="55" r="34" fill="#f0d9b5" stroke="#3c3327" stroke-width="4"/>
+                <circle cx="30" cy="63" r="6" fill="#e8a97a" opacity=".6"/>
+                <circle cx="70" cy="63" r="6" fill="#e8a97a" opacity=".6"/>
+                <circle cx="40" cy="52" r="3.4" fill="#3c3327"/>
+                <circle cx="60" cy="52" r="3.4" fill="#3c3327"/>
+                <ellipse cx="50" cy="62" rx="4.2" ry="3.2" fill="#3c3327"/>
+                <path d="M50 65 Q50 70 44 71 M50 65 Q50 70 56 71" stroke="#3c3327" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div>
+              <h2>Ric</h2>
+              <span class="height">身高 180 cm</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label for="ricWeight">體重（kg）</label>
+            <input id="ricWeight" type="number" min="1" max="300" step="0.1" placeholder="例如 85.6" oninput="updatePerson('ric')">
+          </div>
+          <div>
+            <label for="ricTarget">目標體重（kg）</label>
+            <input id="ricTarget" type="number" min="1" max="300" step="0.1" value="78" oninput="updatePerson('ric')">
+          </div>
+        </div>
+        <label class="check">
+          <input id="ricExercise" type="checkbox">
+          今日有運動
+        </label>
+        <div class="metric-grid">
+          <div class="metric">
+            <div id="ricBMI" class="metric-value">—</div>
+            <div class="metric-label">BMI</div>
+          </div>
+          <div class="metric">
+            <div id="ricStatus" class="metric-value" style="font-size:16px">—</div>
+            <div class="metric-label">BMI 分類</div>
+          </div>
+          <div class="metric">
+            <div id="ricRemain" class="metric-value" style="font-size:17px">—</div>
+            <div class="metric-label">距目標</div>
+          </div>
+        </div>
+        <div class="person-action">
+          <button id="ricSaveBtn" class="btn btn-secondary" onclick="savePerson('ric')">儲存 Ric 紀錄</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="summary-grid">
+      <article class="card summary-card">
+        <div id="monthLabel" class="summary-value">—</div>
+        <div class="summary-label">統計月份</div>
+      </article>
+      <article class="card summary-card">
+        <div id="leonMonthChange" class="summary-value">—</div>
+        <div class="summary-label">🐰 Leon 月變化</div>
+      </article>
+      <article class="card summary-card">
+        <div id="ricMonthChange" class="summary-value">—</div>
+        <div class="summary-label">🐶 Ric 月變化</div>
+      </article>
+      <article class="card summary-card">
+        <div id="exerciseDays" class="summary-value">—</div>
+        <div class="summary-label">本月運動總次數</div>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="card">
+        <h3 class="section-title">近 30 天體重趨勢</h3>
+        <div class="chart-wrap"><canvas id="weightChart"></canvas></div>
+      </article>
+      <article class="card">
+        <h3 class="section-title">近 30 天 BMI 趨勢</h3>
+        <div class="chart-wrap"><canvas id="bmiChart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3 class="section-title">最近 30 天紀錄</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>🐰 體重</th>
+              <th>🐰 BMI</th>
+              <th>🐰 運動</th>
+              <th>🐶 體重</th>
+              <th>🐶 BMI</th>
+              <th>🐶 運動</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody">
+            <tr><td colspan="7">載入中…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">Leon 與 Ric 可在不同時間填寫同一天資料，各自儲存時只會更新自己的欄位。</div>
+    </section>
+
+    <footer class="hint">— 記錄每一天，成為更好的自己 —</footer>
+  </main>
+
+  <script>
+    const API_URL = '請貼上你的_APPS_SCRIPT_WEB_APP_URL';
+
+    const HEIGHTS = { leon: 166.3, ric: 180 };
+    let allRecords = [];
+    let weightChart = null;
+    let bmiChart = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date();
+      document.getElementById('recordDate').value = toDateInput(today);
+      document.getElementById('monthSelect').value = toMonthInput(today);
+      document.getElementById('monthSelect').addEventListener('change', renderMonthlySummary);
+      loadTargets();
+      updatePerson('leon');
+      updatePerson('ric');
+      refreshAll();
+    });
+
+    function toDateInput(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function toMonthInput(date) {
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+    }
+
+    function calculateBMI(weight, heightCm) {
+      const w = Number(weight);
+      if (!w || w <= 0) return null;
+      const h = heightCm / 100;
+      return Math.round((w / (h*h)) * 10) / 10;
+    }
+
+    function getBMIStatus(bmi) {
+      if (bmi === null) return { text:'—', css:'' };
+      if (bmi < 18.5) return { text:'過輕', css:'status-over' };
+      if (bmi < 24) return { text:'正常', css:'status-normal' };
+      if (bmi < 27) return { text:'過重', css:'status-over' };
+      return { text:'肥胖', css:'status-obese' };
+    }
+
+    function updatePerson(person) {
+      const weight = Number(document.getElementById(person+'Weight').value);
+      const target = Number(document.getElementById(person+'Target').value);
+      const bmi = calculateBMI(weight, HEIGHTS[person]);
+      const status = getBMIStatus(bmi);
+
+      document.getElementById(person+'BMI').textContent = bmi ?? '—';
+      const statusEl = document.getElementById(person+'Status');
+      statusEl.textContent = status.text;
+      statusEl.className = 'metric-value ' + status.css;
+      statusEl.style.fontSize = '16px';
+
+      const remainEl = document.getElementById(person+'Remain');
+      if (weight && target) {
+        const diff = Math.round((weight-target)*10)/10;
+        remainEl.textContent = diff > 0 ? `${diff} kg` : diff === 0 ? '已達標' : `低於目標 ${Math.abs(diff)} kg`;
+      } else {
+        remainEl.textContent = '—';
+      }
+      saveTargets();
+    }
+
+    function loadTargets() {
+      document.getElementById('leonTarget').value = localStorage.getItem('leonTarget') || '70';
+      document.getElementById('ricTarget').value = localStorage.getItem('ricTarget') || '78';
+    }
+
+    function saveTargets() {
+      localStorage.setItem('leonTarget', document.getElementById('leonTarget').value);
+      localStorage.setItem('ricTarget', document.getElementById('ricTarget').value);
+    }
+
+    async function apiGet(params={}) {
+      ensureApiUrl();
+      const url = new URL(API_URL);
+      Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+      const res = await fetch(url.toString());
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || '資料讀取失敗');
+      return data;
+    }
+
+    async function apiPost(payload) {
+      ensureApiUrl();
+      const res = await fetch(API_URL, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.message || '資料寫入失敗');
+      return data;
+    }
+
+    function ensureApiUrl() {
+      if (!API_URL.startsWith('https://script.google.com/macros/s/')) {
+        throw new Error('請先在 index.html 內設定 API_URL。');
+      }
+    }
+
+    async function loadSelectedDate() {
+      const date = document.getElementById('recordDate').value;
+      if (!date) return showMessage('請選擇日期。', false);
+      setLoading(true);
+      try {
+        const data = await apiGet({action:'record', date});
+        fillRecord(data.record);
+        showMessage('已讀取該日資料。', true);
+      } catch(err) {
+        showMessage(err.message, false);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function savePerson(person) {
+      const date = document.getElementById('recordDate').value;
+      const weight = document.getElementById(person+'Weight').value;
+
+      if (!date) return showMessage('請選擇日期。', false);
+      if (!weight) return showMessage(`請輸入 ${person === 'leon' ? 'Leon' : 'Ric'} 的體重。`, false);
+
+      const payload = {
+        action:'savePerson',
+        person,
+        date,
+        weight,
+        exercise:document.getElementById(person+'Exercise').checked
+      };
+
+      setLoading(true);
+      try {
+        const data = await apiPost(payload);
+        fillPerson(person, data.record[person]);
+        showMessage(`${person === 'leon' ? 'Leon' : 'Ric'} 的資料已成功儲存。`, true);
+        await refreshAll(false);
+      } catch(err) {
+        showMessage(err.message, false);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function refreshAll(showLoading=true) {
+      if (showLoading) setLoading(true);
+      try {
+        const data = await apiGet({action:'records', days:'30'});
+        allRecords = data.records || [];
+        renderTable();
+        renderCharts();
+        renderMonthlySummary();
+
+        const selected = document.getElementById('recordDate').value;
+        const found = allRecords.find(r => r.date === selected);
+        if (found) fillRecord(found);
+      } catch(err) {
+        showMessage(err.message, false);
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    }
+
+    function fillRecord(record) {
+      ['leon','ric'].forEach(person => fillPerson(person, record?.[person]));
+    }
+
+    function fillPerson(person, item) {
+      document.getElementById(person+'Weight').value = item?.weight ?? '';
+      document.getElementById(person+'Exercise').checked = !!item?.exercise;
+      updatePerson(person);
+    }
+
+    function renderTable() {
+      const body = document.getElementById('recordsBody');
+      if (!allRecords.length) {
+        body.innerHTML = '<tr><td colspan="7">目前尚無紀錄</td></tr>';
+        return;
+      }
+
+      const rows = [...allRecords].sort((a,b)=>b.date.localeCompare(a.date));
+      body.innerHTML = rows.map(r=>`
+        <tr>
+          <td>${r.date.replaceAll('-','/')}</td>
+          <td>${formatWeight(r.leon.weight)}</td>
+          <td>${r.leon.bmi ?? '—'}</td>
+          <td>${r.leon.exercise ? '✓' : '—'}</td>
+          <td>${formatWeight(r.ric.weight)}</td>
+          <td>${r.ric.bmi ?? '—'}</td>
+          <td>${r.ric.exercise ? '✓' : '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCharts() {
+      const rows = [...allRecords].sort((a,b)=>a.date.localeCompare(b.date));
+      const labels = rows.map(r=>r.date.slice(5).replace('-','/'));
+
+      const mossLine = 'rgba(124,138,103,1)';
+      const mossFill = 'rgba(124,138,103,.12)';
+      const clayLine = 'rgba(163,97,61,1)';
+      const clayFill = 'rgba(163,97,61,.12)';
+
+      if (weightChart) weightChart.destroy();
+      weightChart = new Chart(document.getElementById('weightChart'), {
+        type:'line',
+        data:{
+          labels,
+          datasets:[
+            {label:'🐰 Leon 體重',data:rows.map(r=>r.leon.weight || null),spanGaps:true,tension:.3,borderColor:mossLine,backgroundColor:mossFill,fill:true,pointRadius:2},
+            {label:'🐶 Ric 體重',data:rows.map(r=>r.ric.weight || null),spanGaps:true,tension:.3,borderColor:clayLine,backgroundColor:clayFill,fill:true,pointRadius:2}
+          ]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#3c3327',font:{family:'Noto Sans TC'}}}},scales:{x:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}},y:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}}}}
+      });
+
+      if (bmiChart) bmiChart.destroy();
+      bmiChart = new Chart(document.getElementById('bmiChart'), {
+        type:'line',
+        data:{
+          labels,
+          datasets:[
+            {label:'🐰 Leon BMI',data:rows.map(r=>r.leon.bmi || null),spanGaps:true,tension:.3,borderColor:mossLine,backgroundColor:mossFill,fill:true,pointRadius:2},
+            {label:'🐶 Ric BMI',data:rows.map(r=>r.ric.bmi || null),spanGaps:true,tension:.3,borderColor:clayLine,backgroundColor:clayFill,fill:true,pointRadius:2}
+          ]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#3c3327',font:{family:'Noto Sans TC'}}}},scales:{x:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}},y:{ticks:{color:'#7a6f5d'},grid:{color:'#e3d9c4'}}}}
+      });
+    }
+
+    function renderMonthlySummary() {
+      const month = document.getElementById('monthSelect').value;
+      document.getElementById('monthLabel').textContent = month || '—';
+      const rows = allRecords.filter(r=>r.date.startsWith(month)).sort((a,b)=>a.date.localeCompare(b.date));
+
+      document.getElementById('leonMonthChange').textContent = monthChange(rows,'leon');
+      document.getElementById('ricMonthChange').textContent = monthChange(rows,'ric');
+
+      const exerciseCount = rows.reduce((sum,r)=>
+        sum + (r.leon.exercise ? 1 : 0) + (r.ric.exercise ? 1 : 0), 0);
+      document.getElementById('exerciseDays').textContent = `${exerciseCount} 次`;
+    }
+
+    function monthChange(rows, person) {
+      const weights = rows.map(r=>Number(r[person].weight)).filter(Boolean);
+      if (weights.length < 2) return '資料不足';
+      const diff = Math.round((weights[weights.length-1]-weights[0])*10)/10;
+      return `${diff > 0 ? '+' : ''}${diff} kg`;
+    }
+
+    function formatWeight(v) {
+      return v === '' || v == null ? '—' : Number(v).toFixed(1);
+    }
+
+    function setLoading(on) {
+      document.getElementById('loading').style.display = on ? 'flex' : 'none';
+      document.getElementById('leonSaveBtn').disabled = on;
+      document.getElementById('ricSaveBtn').disabled = on;
+    }
+
+    function showMessage(text, ok) {
+      const el = document.getElementById('message');
+      el.textContent = text;
+      el.className = 'message ' + (ok ? 'ok' : 'err');
+      clearTimeout(window.msgTimer);
+      window.msgTimer = setTimeout(()=>el.className='message',5000);
+    }
+  </script>
+</body>
+</html>
